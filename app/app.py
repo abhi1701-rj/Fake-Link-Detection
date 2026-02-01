@@ -1,15 +1,21 @@
+from joblib import load
 import streamlit as st
 import joblib
 import pandas as pd
 import sys
 import os
 
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(_file_), "..")))
+
+from backend.features.feature_extraction import extract_features
+MODEL_PATH = os.path.join(os.path.dirname(__file__),"..","backend","models","rf_basic.pkl")
 # Allow app to access backend folder
 sys.path.append(os.path.abspath("../backend"))
 
 from feature_extraction import extract_features
 
 model = joblib.load("../backend/model.pkl")
+model = load("models/rf_basic.pkl")
 
 columns = [
     "url_length",
