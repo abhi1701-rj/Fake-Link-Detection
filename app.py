@@ -43,6 +43,9 @@ if url:
     ]])
 
     st.write("Extracted features:", extracted)
+    st.write("MODEL EXPECTS:", model.n_features_in_)
+    st.write("APP IS SENDING:", features.shape)
+
 
     if st.button("Check URL"):
         prediction = model.predict(features)[0]
