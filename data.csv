@@ -1,0 +1,9 @@
+url_length,count_dots,count_slash,has_https,has_ip,digit_count,special_char_count,suspicious_words,subdomain_count,label
+23,2,3,1,0,0,6,0,1,1
+45,3,5,0,0,2,10,1,2,0
+50,4,6,1,1,3,12,0,2,0
+30,2,3,1,0,0,5,0,1,1
+60,5,8,0,1,4,15,1,3,0
+25,2,3,1,0,1,6,0,1,1
+40,3,5,1,0,0,8,0,2,1
+55,4,7,0,1,2,13,1,2,0
