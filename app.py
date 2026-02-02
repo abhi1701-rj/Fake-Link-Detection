@@ -2,7 +2,14 @@ import streamlit as st
 import joblib
 import numpy as np
 
-model = joblib.load("model.pkl")
+import os
+
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+MODEL_PATH = os.path.join(BASE_DIR, "model.pkl")
+
+model = joblib.load(MODEL_PATH)
+
 
 FEATURE_NAMES = [
     "url_length",
