@@ -72,4 +72,19 @@ with tab2:
 
     # Example chart of last checked URL features
     data = pd.DataFrame({
-        "Feature": ["url_length","count_dots","]()
+    "Feature": [
+        "url_length",
+        "count_dots",
+        "count_slash",
+        "digit_count",
+        "special_char_count"
+    ],
+    "Value": [
+        len(url) if url else 0,
+        url.count(".") if url else 0,
+        url.count("/") if url else 0,
+        sum(c.isdigit() for c in url) if url else 0,
+        sum(not c.isalnum() for c in url) if url else 0
+    ]
+})
+
