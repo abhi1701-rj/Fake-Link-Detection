@@ -1,81 +1,83 @@
 import streamlit as st
-import pandas as pd
 import joblib
 import os
+import re
+import pandas as pd
+import numpy as np
 
-# ---------------- Page config ----------------
-st.set_page_config(page_title="Fake Link Detection", layout="wide")
+# ---------------- PAGE CONFIG ----------------
+st.set_page_config(
+    page_title="Fake Link Detection",
+    layout="wide"
+)
 
-# ---------------- Load model ----------------
+# ---------------- LOAD MODEL ----------------
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-MODEL_PATH = os.path.join(BASE_DIR, "model.pkl")
-model = joblib.load(MODEL_PATH)
+model = joblib.load(os.path.join(BASE_DIR, "model.pkl"))
 
-# ---------------- Header ----------------
+# ---------------- TITLE ----------------
 st.title("🚨 Fake Link Detection System")
-st.write("Check whether a URL is **SAFE or FAKE** using Machine Learning")
-st.write("Raw model output:", prediction)
-st.divider()
+st.markdown("Detect malicious URLs instantly using **Machine Learning**")
 
-# ---------------- Input ----------------
-url = st.text_input("Enter a URL to test")
+st.markdown("---")
 
-if st.button("Check URL"):
+# ---------------- INPUT ----------------
+url = st.text_input("🔗 Enter a URL to test", placeholder="https://www.google.com")
+
+# ---------------- FEATURE EXTRACTION ----------------
+def extract_features(url):
+    return {
+        "url_length": len(url),
+        "count_dots": url.count("."),
+        "count_slash": url.count("/"),
+        "has_https": int(url.startswith("https")),
+        "has_ip": int(bool(re.search(r'\d+\.\d+\.\d+\.\d+', url))),
+        "digit_count": sum(c.isdigit() for c in url),
+        "special_char_count": sum(not c.isalnum() for c in url),
+        "suspicious_words": int(any(w in url.lower() for w in ["login","verify","secure","bank","update"])),
+        "subdomain_count": max(url.count(".") - 1, 0)
+    }
+
+# ---------------- PREDICTION ----------------
+if st.button("🔍 Analyze URL"):
     if url.strip() == "":
-        st.warning("Please enter a URL")
+        st.warning("⚠️ Please enter a URL")
     else:
-        # -------- Feature extraction --------
-        url_length = len(url)
-        count_dots = url.count(".")
-        count_slash = url.count("/")
-        has_https = 1 if url.startswith("https://") else 0
-        has_ip = 1 if any(part.isdigit() for part in url.replace("http://","").replace("https://","").split(".")[:4]) else 0
-        digit_count = sum(c.isdigit() for c in url)
-        special_char_count = sum(not c.isalnum() for c in url)
-        suspicious_words = sum(word in url.lower() for word in ["login", "secure", "verify", "update"])
-        subdomain_count = max(url.count(".") - 1, 0)
+        features_dict = extract_features(url)
+        features_df = pd.DataFrame([features_dict])
 
-        # -------- Create DataFrame --------
-        features = pd.DataFrame([[
-            url_length,
-            count_dots,
-            count_slash,
-            has_https,
-            has_ip,
-            digit_count,
-            special_char_count,
-            suspicious_words,
-            subdomain_count
-        ]], columns=[
-            "url_length",
-            "count_dots",
-            "count_slash",
-            "has_https",
-            "has_ip",
-            "digit_count",
-            "special_char_count",
-            "suspicious_words",
-            "subdomain_count"
-        ])
+        prediction = model.predict(features_df)[0]
 
-        # -------- Prediction --------
-        prediction = model.predict(features)[0]
+        # -------- RESULT --------
+        col1, col2 = st.columns(2)
 
-        if prediction == 1:
-            st.success("✅ This URL looks SAFE")
-        else:
-            st.error("❌ This URL looks FAKE")
+        with col1:
+            st.subheader("📌 Prediction Result")
+            if prediction == 1:
+                st.success("✅ This URL looks SAFE")
+            else:
+                st.error("❌ This URL looks FAKE")
 
-        # -------- Show features --------
-        st.subheader("Extracted Features")
-        st.dataframe(features)
+        with col2:
+            st.subheader("📊 Key Metrics")
+            st.metric("URL Length", features_dict["url_length"])
+            st.metric("Dots Count", features_dict["count_dots"])
+            st.metric("Special Characters", features_dict["special_char_count"])
 
-        # -------- Simple chart (NO plotly) --------
-        st.subheader("Feature Visualization")
-        chart_df = features.T
-        chart_df.columns = ["Value"]
-        st.bar_chart(chart_df)
+        st.markdown("---")
 
-# ---------------- Footer ----------------
-st.divider()
+        # -------- FEATURES TABLE --------
+        st.subheader("🔎 Extracted Features")
+        st.dataframe(features_df, width="stretch")
+
+
+        # -------- DASHBOARD CHART --------
+        st.subheader("📈 Feature Visualization")
+        chart_df = pd.DataFrame({
+            "Feature": features_dict.keys(),
+            "Value": features_dict.values()
+        })
+        st.bar_chart(chart_df.set_index("Feature"))
+
+st.markdown("---")
 st.caption("© Fake Link Detection | Developed by Abhishek Reddy")
