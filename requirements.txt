@@ -3,4 +3,6 @@ pandas
 numpy
 scikit-learn
 requests
+joblibstreamlit
 joblib
+python-whois

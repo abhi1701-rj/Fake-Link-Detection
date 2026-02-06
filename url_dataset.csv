@@ -1,0 +1,16 @@
+url,label
+https://google.com,good
+https://amazon.in,good
+https://secure-login-google.com,fake
+http://192.168.1.5/login,fake
+https://bank-verify-account.com,fake
+https://google.com,good
+https://www.google.com,good
+https://accounts.google.com,good
+https://amazon.in,good
+https://www.amazon.com,good
+https://facebook.com,good
+https://github.com,good
+https://microsoft.com,good
+https://apple.com,good
+https://wikipedia.org,good
