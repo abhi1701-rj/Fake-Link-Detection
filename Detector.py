@@ -4,6 +4,13 @@ import urllib.parse
 from rules import rule_based_check
 from whois_check import get_domain_age
 
+def load_css():
+    with open("assets/style.css") as f:
+        st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+
+load_css()
+
+
 # Load ML model and vectorizer
 @st.cache_resource
 def load_ml():
@@ -20,8 +27,9 @@ st.set_page_config(
     layout="centered"
 )
 
-st.title("🚨 Fake Link Detection System")
-st.write("Hybrid Detection: Rule-based + Machine Learning")
+st.markdown('<div class="title">🚨 Fake Link Detection System</div>', unsafe_allow_html=True)
+st.markdown('<div class="card">Hybrid Detection: Rule-based + Machine Learning</div>', unsafe_allow_html=True)
+
 
 # Input
 url = st.text_input("🔗 Enter a URL to analyze", "https://www.google.com")
