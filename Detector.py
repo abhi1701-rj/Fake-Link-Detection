@@ -1,4 +1,5 @@
 import streamlit as st
+import streamlit.components.v1 as components
 import joblib
 import urllib.parse
 from rules import rule_based_check
@@ -26,6 +27,11 @@ st.set_page_config(
     page_icon="🚨",
     layout="centered"
 )
+with open("templates/index.html", "r") as f:
+    html_template = f.read()
+
+components.html(html_template, height=600, scrolling=False)
+
 
 st.title("🚨 Fake Link Detection System")
 st.write("Hybrid Detection: Rule-based + Machine Learning")
