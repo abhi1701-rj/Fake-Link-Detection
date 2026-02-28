@@ -85,7 +85,7 @@ def final_decision(url, fake_prob):
     # -----------------------
     if fake_prob >= 0.70:
         return "FAKE ❌", reasons, age
-    elif fake_prob >= 0.40:
+    elif fake_prob >= 0.60:
         return "SUSPICIOUS ⚠️", reasons, age
     else:
         return "SAFE ✅", reasons, age
