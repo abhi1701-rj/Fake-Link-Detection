@@ -4,6 +4,16 @@ import urllib.parse
 import difflib
 from rules import rule_based_check
 from whois_check import get_domain_age
+from urllib.parse import urlparse
+
+# ---------------------------
+# Page Config (MUST be first)
+# ---------------------------
+st.set_page_config(
+    page_title="Fake Link Detection System",
+    page_icon="🚨",
+    layout="centered"
+)
 
 # ---------------------------
 # Load CSS
@@ -16,15 +26,6 @@ def load_css():
         pass
 
 load_css()
-
-# ---------------------------
-# Page Config (MUST be first Streamlit command)
-# ---------------------------
-st.set_page_config(
-    page_title="Fake Link Detection System",
-    page_icon="🚨",
-    layout="centered"
-)
 
 # ---------------------------
 # Load ML Model
@@ -40,50 +41,92 @@ model, vectorizer = load_ml()
 # ---------------------------
 # Typosquatting Detection
 # ---------------------------
+# ---------------------------
+# Typosquatting Detection (Improved)
+# ---------------------------
+# ---------------------------
+# Typosquatting Detection (FINAL FIXED VERSION)
+# ---------------------------
+import difflib
+
 def is_typo(domain):
     legit_domains = [
-        "google.com",
-        "facebook.com",
-        "amazon.com",
-        "microsoft.com",
-        "apple.com"
+        "google",
+        "facebook",
+        "amazon",
+        "microsoft",
+        "apple",
+        "paypal"
     ]
 
+    # Get main name
+    domain_name = domain.split(".")[0].lower()
+
+    # If it contains numbers inside well-known name pattern
     for legit in legit_domains:
-        similarity = difflib.SequenceMatcher(None, domain, legit).ratio()
-        if similarity > 0.8 and domain != legit:
+        # Replace common substitutions
+        normalized = (
+            domain_name
+            .replace("0", "o")
+            .replace("1", "l")
+            .replace("3", "e")
+            .replace("@", "a")
+            .replace("$", "s")
+        )
+
+        # Direct match after normalization
+        if normalized == legit and domain_name != legit:
             return True
 
     return False
-
 # ---------------------------
 # Final Decision Logic
 # ---------------------------
-def final_decision(url, fake_prob):
-    reasons = rule_based_check(url)
+# 4️⃣ final_decision()  ← PASTE HERE
+def final_decision(url, fake_probability):
 
-    parsed = urllib.parse.urlparse(url)
-    domain = parsed.netloc.replace("www.", "")
+    risk_factors = []
 
-    # Domain age check
-    age = get_domain_age(domain)
-    if age != -1 and age < 180:
-        reasons.append("Newly registered domain (less than 6 months old)")
+    domain = extract_domain(url)
 
-    # Typosquatting check
     if is_typo(domain):
-        reasons.append("Possible typosquatting attack")
+        risk_factors.append("Possible typosquatting attack")
 
-    # -----------------------
+    if fake_probability > 0.7 or len(risk_factors) >= 2:
+        result = "FAKE ❌"
+    elif len(risk_factors) == 1:
+        result = "SUSPICIOUS ⚠️"
+    else:
+        result = "SAFE ✅"
+
+    age = "Unknown"
+
+    return result, risk_factors, age
+    # Typosquatting check
+# 2️⃣ Domain Extraction Function (MUST BE ABOVE)
+def extract_domain(url):
+    if not url.startswith(("http://", "https://")):
+        url = "http://" + url
+
+    parsed = urlparse(url)
+    domain = parsed.netloc.lower()
+
+    if domain.startswith("www."):
+        domain = domain[4:]
+
+    return domain
+    domain = extract_domain(url)
+
+    if is_typo(domain):
+        risk_factors.append("Possible typosquatting attack")
+
     # Strong Rule-Based Detection
-    # -----------------------
+    
     if len(reasons) >= 2:
         return "FAKE ❌", reasons, age
 
-    # -----------------------
     # ML-Based Decision
-    # -----------------------
-    if fake_prob >= 0.70:
+    if fake_prob >= 0.75:
         return "FAKE ❌", reasons, age
     elif fake_prob >= 0.60:
         return "SUSPICIOUS ⚠️", reasons, age
@@ -94,33 +137,33 @@ def final_decision(url, fake_prob):
 # UI
 # ---------------------------
 st.title("🚨 Fake Link Detection System")
-st.write("Hybrid Detection: Rule-based + Machine Learning")
+st.write("Hybrid Detection: Rule-Based + Machine Learning")
 
-url = st.text_input("🔗 Enter a URL to analyze", "https://www.google.com")
+url = st.text_input("🔗 Enter a URL to analyze")
 
 if st.button("🔍 Analyze URL"):
 
     if not url.startswith(("http://", "https://")):
         st.error("Please enter a valid URL starting with http:// or https://")
     else:
-        # Vectorize
+        # Vectorize input
         vector = vectorizer.transform([url])
 
-        # Get probabilities
+        # Get ML probability safely
         try:
             probs = model.predict_proba(vector)[0]
             classes = model.classes_
 
             if "FAKE" in classes:
                 fake_index = list(classes).index("FAKE")
-                fake_probability = probs[fake_index]
+                fake_probability = float(probs[fake_index])
             else:
                 fake_probability = 0.5
 
         except:
             fake_probability = 0.5
 
-        # Final Result
+        # Final Decision
         result, reasons, age = final_decision(url, fake_probability)
 
         # -----------------------
@@ -128,7 +171,7 @@ if st.button("🔍 Analyze URL"):
         # -----------------------
         st.subheader(f"Result: {result}")
 
-        st.write(f"🔐 Fake Probability: **{fake_probability:.2f}**")
+        st.write(f"🤖 ML Fake Probability: **{fake_probability * 100:.2f}%**")
 
         if age != -1:
             st.write(f"📅 Domain Age: **{age} days**")

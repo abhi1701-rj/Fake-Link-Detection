@@ -1,0 +1,13 @@
+import re
+import numpy as np
+
+def extract_features(url):
+    return [
+        len(url),                         # URL length
+        url.count('.'),                   # dot count
+        url.count('-'),                   # dash count
+        sum(c.isdigit() for c in url),    # digit count
+        int("@" in url),                  # contains @
+        int("https" in url),              # https usage
+        int(bool(re.search(r'\d+\.\d+\.\d+\.\d+', url)))  # IP address usage
+    ]

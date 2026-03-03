@@ -1,68 +1,84 @@
-# train_model.py
-
 import pandas as pd
-import numpy as np
-from sklearn.ensemble import RandomForestClassifier
+import pickle
+
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
-import joblib
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 
-# -------------------------
-# Step 1: Load your dataset
-# -------------------------
-# Replace 'data.csv' with your dataset path
-df = pd.read_csv("data.csv")
+# ===============================
+# 1. Load Dataset
+# ===============================
 
-# -------------------------
-# Step 2: Select EXACT FEATURES
-# -------------------------
-FEATURES = [
-    "url_length",
-    "count_dots",
-    "count_slash",
-    "has_https",
-    "has_ip",
-    "digit_count",
-    "special_char_count",
-    "suspicious_words",
-    "subdomain_count"
-]
+data = pd.read_csv("phishing_dataset.csv")
 
-TARGET = "label"  # replace with your target column name, e.g., 0=Fake, 1=Safe
+# Keep required columns
+data = data[['url', 'label']]
 
-X = df[FEATURES]
-y = df[TARGET]
+print("Total URLs in dataset:", len(data))
+print("Class Distribution:\n", data['label'].value_counts())
 
-# -------------------------
-# Step 3: Split the dataset
-# -------------------------
+# ===============================
+# 2. Split Dataset (Balanced)
+# ===============================
+
+X = data['url']
+y = data['label']
+
 X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.2, random_state=42
+    X,
+    y,
+    test_size=0.2,
+    random_state=42,
+    stratify=y   # ensures both classes appear in train & test
 )
 
-# -------------------------
-# Step 4: Train the model
-# -------------------------
-model = RandomForestClassifier(n_estimators=100, random_state=42)
-model.fit(X_train, y_train)
+print("\nTraining samples:", len(X_train))
+print("Testing samples:", len(X_test))
 
-# -------------------------
-# Step 5: Logs for debugging
-# -------------------------
-print("=== TRAINING LOGS ===")
-print("Feature names:", FEATURES)
-print("Number of features:", model.n_features_in_)
-print("X_train shape:", X_train.shape)
-print("X_test shape:", X_test.shape)
+# ===============================
+# 3. Feature Extraction
+# ===============================
 
-y_pred = model.predict(X_test)
-print("Accuracy:", accuracy_score(y_test, y_pred))
-print("Confusion Matrix:\n", confusion_matrix(y_test, y_pred))
-print("Classification Report:\n", classification_report(y_test, y_pred))
-print("=====================")
+vectorizer = TfidfVectorizer(
+    analyzer='char',
+    ngram_range=(2, 4)
+)
 
-# -------------------------
-# Step 6: Save model
-# -------------------------
-joblib.dump(model, "model.pkl")
-print("Model saved as 'model.pkl'")
+X_train_vector = vectorizer.fit_transform(X_train)
+X_test_vector = vectorizer.transform(X_test)
+
+# ===============================
+# 4. Train Model
+# ===============================
+
+model = LogisticRegression(max_iter=1000)
+model.fit(X_train_vector, y_train)
+
+# ===============================
+# 5. Evaluate Model
+# ===============================
+
+y_pred = model.predict(X_test_vector)
+
+accuracy = accuracy_score(y_test, y_pred)
+
+print("\nModel Accuracy:", round(accuracy * 100, 2), "%")
+
+print("\nClassification Report:\n")
+print(classification_report(y_test, y_pred))
+
+print("\nConfusion Matrix:\n")
+print(confusion_matrix(y_test, y_pred))
+
+# ===============================
+# 6. Save Model & Vectorizer
+# ===============================
+
+with open("model.pkl", "wb") as f:
+    pickle.dump(model, f)
+
+with open("vectorizer.pkl", "wb") as f:
+    pickle.dump(vectorizer, f)
+
+print("\nModel and Vectorizer saved successfully.")
